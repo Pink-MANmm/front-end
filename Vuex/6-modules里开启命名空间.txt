@@ -1,0 +1,54 @@
+目标
+*防止多个模块之间，mutations/actions/getters的名字冲突
+
+开启命名空间
+在模块对象内设置namespaced:true
+const moduleShopCar = {
+    namespaced:true,
+    state(){},
+    mutations:{},
+    actions:{},
+    getters:{},
+    modules:{}
+}
+
+state使用方式修改
+*直接使用无变化:this.$store.state.模块名.变量名
+*辅助函数需要遵守格式
+ ...mapState('模块名'，['state变量名'])
+
+mutations使用方式修改
+*方式1：组件内-直接使用
+ 原语法：
+ this.$store.commit('mutations里的函数名'，具体值)
+ 开启命名空间后： 
+ this.$store.commit('模块名/mutations里的函数名',具体值)
+*方式2：：组件内-映射使用
+ 原语法：
+ ...mapMutations(['mutations里方法名'])
+ 开启命名空间后语法：
+ ...mapMutations('模块名',['mutations里方法名'])
+
+actions使用方式修改
+*方式1：组件内-直接使用
+ 原语法：
+ this.$store.dispatch('actions里的函数名'，具体值)
+ 开启命名空间后语法：
+ this.$state.dispatch('模块名/actions里的函数名'，具体值)
+*方式2：组件内-映射使用
+ 原语法：
+ ...mapActions(['actions里方法名'])
+ 开启命名空间后语法：
+ ...mapActions('模块名',['actions里方法名'])
+
+getters使用方式修改
+*方式1：组件内-直接使用
+ 原语法：
+ this.$store.getters.计算属性名
+ 开启命名空间后语法：
+ this.$state.getters['模块名/计算属性名']
+*方式2：组件内-映射使用
+ 原语法：
+ ...mapGetters(['getters里计算属性-----------名'])
+ 开启命名空间后语法：
+ ...mapGetters('模块名',['Getters里计算属性名'])

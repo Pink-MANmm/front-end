@@ -1,0 +1,522 @@
+概述：
+TS中的高级类型有很多，重点学习一下高级类型：
+①class类
+②类型兼容性
+③交叉类型
+④泛型和keyof
+⑤索引签名类型和索引查询类型
+⑥映射类型
+
+1.class类
+1.1 TypeScript全面支持ES2015中引入的class关键字，并为其添加了类型注解和其他语法 （比如，可见性修饰符等）
+class基本使用，如下：
+class Person{}
+    //const p:Person
+const p = new Person()
+解释：
+①根据TS中的类型推断，可以知道Person类的实例对象p的类型是Person。
+②TS中的class，不仅提供了class的语法功能，也作为一种类型存在
+
+1.2 实例属性初始化：
+class Person{
+    age:number
+    gender = '男'
+    //gender:string = '男'
+}
+解释:
+①声明成员age，类型为number（没有初始值）。
+②声明成员gender，并设置初始值，此时，可省略类型注解（TS类型推论为string类型）
+
+1.3 构造函数：
+class Person{
+    age:number
+    gender:string
+
+    constructor(age:number,gender:string){
+        this.age=age
+        this.gender=gender
+    }
+}
+解释：
+①成员初始化（比如，age：number）后，才可以通过this.age来访问实例成员。
+②需要为构造函数指定类型注解，否则会被隐式推断为any；构造函数不需要返回值类型
+
+1.4 实例方法：
+class Point{
+    x=10
+    y=10
+
+    scale(n:number):void{
+        this.x +=n
+        this.y +=n
+    }
+}
+解释：方法的类型注解（参数和返回值）与函数用法相同
+
+1.5 类继承的两种方式：①extends（继承父类）②implements（实现接口）。
+说明：JS中只有extends，而implements是TS特有的。
+
+class Animal{
+    move(){console.log('moving along!')}
+}
+class Dog extends Animal {
+    bark(){console.log('汪！')}
+}
+const dog = new Dog()
+解释：
+①通过extends关键字实现继承
+②子类Dog继承父类 Animal，则Dog的 实例对象dog就同时具有了父类Animal和子类Dog的所有属性和方法
+
+interface Singable{
+    sing():void
+}
+class Person implements Singable{
+    sing(){
+        console.log('你是我的小苹果')
+    }
+}
+解释：
+①通过implements关键字让class实现接口
+②Person类实现接口Singable意味着，Person类中必须提供Singable接口中指定的所有方法和属性
+
+1.6 类成员可见性：可以使用TS来控制class的方法或属性对于class外的代码是否可见。
+可见性修饰符包括：①public（公开的）②protected（受保护的）③private（私有的）。
+①public：表示公有的、公开的，公有成员可以被任何地方访问，默认可见性。
+class Animal{
+    public move(){
+        console.log('Moving Along!')
+    }
+}
+解释：
+*在类属性或方法前面添加public关键字，来修饰该属性或方法是共有的
+*因为public是默认可见性，所以，可以直接省略。
+②protected：表示受保护的，仅对其声明所在类和子类中（非实力对象）可见。
+class Animal{
+    protected move(){console.log('Moving Along!')}
+}
+class Dog extends Animal{
+    bark(){
+        console.log('汪！')
+        this.move()
+    }
+}
+解释：
+*在类属性或方法前面添加protected关键字，来修饰该属性或方法是受保护的
+*在子类的方法内部可以通过this来访问父类中受保护的成员，但是，对实例不可见！
+③private：表示私有的，只在当前类中可见，对实例对象以及子类也是不可见的
+class Animal{
+    private move(){console.log('Moving Along!')}
+    walk(){
+        this.move()
+    }
+}
+解释:
+*在类属性或方法前面添加private关键字，来修饰该属性或方法是私有的。
+*私有的属性或方法只在当前类中可见，对子类和实例对象也都是不可见的！
+
+1.7 除了可见性修饰符之外，还有一个常见修饰符就是：readonly（只读修饰符）。
+readonly：表示 只读，用来防止在构造函数之外对属性进行赋值
+class Person{
+    readonly age:number = 18
+    constructor(age:number){
+        this.age=age
+    }
+}
+解释：
+*使用readonly关键字修饰该属性是只读的，注意只能修饰属性不能修饰方法
+*注意：属性age后面的类型注解（比如，此处的number）如果不加，则age的类型为18（字面量类型）。
+*接口或者{}表示的对象类型，也可以使用readonly
+//interface IPerson{
+//    readonly name:string
+//}
+//let  obj:IPerson = {
+//    name:'jack'
+//}
+let obj:{readonly name:string}={
+    name:'jack'
+}
+obj name='rose'(报错)
+
+2.类型兼容性
+2.1 两种类型系统：①Structural Type System（结构化类型系统）②Nominal Type System（标明类型系统）
+TS采用的是结构化类型系统，也叫做duck typing（鸭子类型），类型检查关注的是值所具有的形状。
+也就是说，在结构类型系统中，如果两个对象具有相同的结构，则认为它们属于同一类型
+class Point{x:number,y:number}
+class Point2D{x:number;y:number}
+
+const  p:Point  = new Point2D()
+解释：
+①Point和Point2D是两个名称不同的类。
+②变量p的类型被现实是标注为 Point类型，但是，它的值确实Point2D的实例，并且没有类型错误
+③因为TS是结构化类型系统，只检查Point和Point2D的 结构是否相同（相同，都具有x和y两个属性，属性类型也相同）
+④但是，如果在Nominal Type System中（比如，C#，Java等），他们是不同的类，类型无法兼容
+
+2.2 注意：在结构化类型系统中，如果两个对象具有相同的形状，则认为它们属于同一类型，这种说法并不准确
+更准确的说法：对於对象类型来说，y的成员至少与x相同，则x兼容y（成员多的可以赋值给少的）
+class Point{x:number,y:number}
+class Point3D{x:number;y:number;z:number}
+
+const  p:Point  = new Point2D()
+解释：
+①Point3D的成员至少与Point相同，则Point兼容Point3D。
+②所以，成员多的Point3D可以赋值给成员少的Point。
+
+2.3 除了class之外，TS中的其他类型也存在相互兼容的情况，包括：①接口兼容性②函数兼容性等
+*接口之间的兼容性，类似于class，并且，class和interface之间也可以兼容
+interface Point{x:number;y:number}
+interface Point2D{x:number;y:number}
+let p1:Point
+let p2:Point2D=p1
+
+interface Point3D{x:number;y:number;z:number}
+let p3:Point3D
+p2=p3
+
+class Point3D{x:number;y:number;z:number}
+let P3:Point2D=new Point3D()
+
+2.4 函数之间兼容性比较复杂，需要考虑：①参数个数②参数类型③返回值类型
+①参数个数，参数多的兼容参数少的（或者说，参数少的可以赋值给多的）。
+type F1=(a:number)=>void
+type F2=(a:number,b:number)=>void
+let f1:F1
+let f2:F2 = f1
+
+const arr=['a','b','c']
+arr.forEach(()=>{})
+arr.forEach((item)=>{})
+解释：
+*参数少的可以复制给参数多的，所以，f1可以赋值给f2
+*数组forEach方法的第一个参数是回调函数，该示例中类型为：(value:string,index:number,array:string[])=>void.
+*在JS中省略用不到的函数参数实际上是很常见的，这样的使用方式，促成了TS中函数类型之间的兼容性。
+*并且因为回调函数是有类型的，所以，TS会自动推导出参数item、index、array的类型
+②参数类型，相同位置的参数类型要相同（原始类型）或兼容（对象类型）。
+type F1=(a:number)=>string
+type F2=(a:number)=>string
+let f1:F1
+let f2:F2 = f1
+解释：函数类型F2兼容函数类型F1，因为F1和F2的第一个参数类型相同
+interface Point2D{x:number;y:number}
+interface Point3D{x:number;y:number;z:number}
+type F2=(p:Point2D)=>void
+type F3=(p:Point3D)=>void
+let f2:F2
+let f3:F3 = f2
+f2=f3//报错
+解释：
+*注意，此处与前面讲到的接口兼容性冲突
+*技巧：将对象拆开，把每个属性看作一个个参数，则，参数少的（f2）可以赋值给参数多的（f3）
+③返回值类型，只关注返回值类型本身即可：
+type F5=()=>string
+type F6=()=>string
+let f5:F5
+let f6:F6  = f5
+
+type F7=()=>{name:string}
+type F8=()=>{name:string;age:number}
+let f7:F7
+let f8:F8
+f7=f8
+解释:
+*如果返回值类型是原始类型，此时两个类型要相同，比如，左侧类型F5和F6
+*如果返回值类型是对象类型，此时成员多的可以赋值给成员少的，比如，右侧类型F7和F8
+
+3.交叉类型
+3.1 交叉类型（&）：功能类似于接口继承（extends），用于组合多个类型为一个类型（常用于对象类型）
+比如：
+interface Person{name:string}
+interface Contact{phone:string}
+type PersonDetail = Person & Contact
+let obj:PersonDetail = {
+    name:'jack',
+    phone:'133...'
+}
+解释：使用交叉类型后，新的类型PersonDetail就同时具备了Person和Contact的所有属性类型
+相当于：
+type PersonDetail = {name:string;Phone:string}
+
+3.2 交叉类型（&）和接口继承（extends）的对比：
+*相同点：都可以实现对象类型的组合。
+*不同点：两种方式实现类型组合时，对于同名类型之间，处理类型冲突的方式不同
+interface A {
+    fn:(value:number)=>string
+}
+interface B extends A {
+    fn:(value:string)=>string
+}
+//-------------------------------
+interface A {
+    fn:(value:number)=>string
+}
+interface B {
+    fn:(value:string)=>string
+}
+type C = A & B
+说明：以上代码，接口继承会报错（类型不兼容）；交叉类型没有错误，可以简单地理解为：
+fn:(value:string|number)=>string
+
+4.泛型
+4.1 泛型是可以在保证类型安全前提下，让函数等与多种类型一起工作，从而实现复用，常用于：函数、接口、class中。
+需求：创建一个id函数，传入什么数据就返回该数据本身（也就是说，参数和返回值类型相同）
+function id(value:number):number{return value}
+比如，id(10)调用以上函数就会直接返回10本身，但事实，该函数只接受数值类型，无法用于其他类型。
+为了能让函数能够接受任意类型，可以将参数类型修改为any。但是，这样就失去了TS的类型保护，类型不安全。
+function id(value:any):any{return value}
+泛型在保证类型安全（不丢失类型信息）的同时，可以让函数等与多种不同的类型一起工作，灵活可服用。
+实际上，在 C#和Java等编程语言中，反省都是用来实现可复用组件功能的主要工具之一
+
+4.2 创建泛型函数：
+function id<Type>(value:Type):Type{return value}
+解释：
+①语法：在函数名称的后面添加<>（尖括号），尖括号中添加类型变量，比如此处的Type。
+②类型变量Type，是一种特殊类型的变量，他处理类型而不是值
+③该类型变量相当于一个类型容器，能够捕获用户提供 的类型（具体是什么类型由用户调用该函数时是指定）
+④因为Type是类型，因此可以将其作为函数参数和返回值的类型，表示参数和返回值具有相同的类型
+⑤类型变量Type，可以是任意合法的变量名称
+
+4.3 调用泛型函数：
+function id<Type>(value:Type):Type{return value}
+    //const num:number
+const num = id<number>(10)
+    //const str:string
+const str = id<string>('a')
+解释：
+①语法：在函数名称的后面添加<>（尖括号），尖括号中指定具体的类型，比如，此处的number。
+②当传入类型number后，这个类型就会被函数声明时指定的类型变量type捕获到。
+③此时，Type的类型就是number，所以，函数id参数和返回值的类型也都是number。
+同样，如果传入类型string，函数id参数和返回值的类型就都是string。
+这样，通过泛型就做到了让id函数与多种不同的类型一起工作，实现了复用的同时保证了类型安全。
+
+4.4 简化调用泛型函数：
+function id<Type>(value:Type):Type{return value}
+    //let num:nummber                           //let num:number
+let num = id<number>(10)     ----->     let  num = id(10)
+解释：
+①在调用泛型函数时，可以省略<类型>来简化泛型函数的调用。
+②此时，TS内部会采用一种叫做类型参数推断的机制，来根据传入的实参自动推断出类型变量Type的类型
+③比如，传入实参10，TS会自动推断出变量num的类型number，并作为Type的类型
+推荐：使用这种简化的方式调用泛型函数，使代码更短，更易于阅读 
+说明：当编译器无法推断类型或者推断的类型不准确时，就需要显式地传入类型参数
+
+4.5 泛型约束：默认情况下，泛型函数的类型变量Type可以代表多个类型，这导致无法访问任何属性。
+比如，id('a')调用函数时获取参数的长度：
+function id<Type>(value:Type):Type{
+    console.log(value.length)
+    return value
+}
+解释 ：Type可以代表任意类型，无法保证一定存在 length属性，比如number类型就没有length。
+此时，就需要为泛型添加约束来收缩类型（缩窄类型取值范围）
+
+添加泛型约束收缩类型，主要有以下两种方式：①指定更加具体的类型②添加约束
+①指定更加具体的类型
+function id<Type>(value:Type[]):Type[]{
+    console.log(value.length)
+    return value
+}
+比如，将类型修改为Type[]（Type类型的值），因为只要是数组就一定存在length属性，因此就可以访问了 
+②添加约束
+interface ILength{lenght:number}
+function id<Type extends ILength>(value:Type):Type{
+    console.log(value.length)
+    return value
+}
+解释：
+*创建描述约束的接口ILength，该接口要求提供lenght属性
+*通过extends关键字使用该接口，为泛型（类型变量）添加约束
+*该约束表示：传入的类型必须具有 length属性
+注意：传入的实参（比如，数组 ）只要有length属性即可，这也符合前面讲到的接口的类型兼容性
+
+4.6 泛型的类型变量可以有多个，并且类型变量之间还可以约束（比如，第二个类型变量受第一个类型变量约束）
+比如，创建一个函数来获取对象中属性的值：
+function getProp<Type,Key extends keyof Type>(obj:Type,key:Key){
+    return obj[key]
+}
+let person={name:'jack',age:18}
+getProp(person,'name')
+解释：
+*添加了第二个类型变量Key，两个类型变量之间使用（，）逗号分隔
+*keyof关键字 接受一个对象类型，生成其键名称（可能是字符串或数字）的联合类型
+*本示例中keyof Type实际上获取的是person对象所有键的联合类型，也就是：'name'|'age'
+*类型变量Key受Type约束，可以理解为 ：Key只能是Type所有键中的任意一个，或者说只能访问对象中存在的属性
+
+4.7 泛型接口：接口也可以配合泛型来使用 ，以增加其灵活性，增强其复用性
+inteface IdFunc<Type>{
+    id:(value:Type)=>Type
+    ids:()=>Type[]
+}
+let obj:IdFunc<number>={
+    id(value){return value}
+    ids(){return [1,3,5]}
+}
+解释：
+①在接口名称的后面添加<类型变量>，那么，这个接口就变成了泛型 接口。
+②接口的类型变量，对接口中所有其他成员可见，也就是接口中所有成员都可以使用类型变量
+③使用泛型接口时，需要显式指定具体的类型（比如，此处的IdFunc<number>）
+④此时，id方法的参数和返回值 类型都是number；ids方法的返回值 类型是number[]
+
+4.8 实际上，JS中的数组在TS中就是一个泛型接口
+const strs = ['a','b','c']
+strs.forEach
+    //(method)Array<string>.forEach(callbackfn:(value:string,index:number,array:string[])=>void,thisArg?:any):void
+
+const nums = [1,2,3]
+nums.forEach
+    //(method)Array<number>.forEach(callbackfn:(value:number,index:number,array:number[])=>void,thisArg?:any):void
+解释 ：当我们在使用数组时，TS会根据数组的不同类型，来自动将类型变量设置为 相应的类型
+技巧：可以通过Ctrl+鼠标左键（Mac：option+鼠标左键）来查看具体的类型信息（数组就是一个泛型接口）
+
+4.9 泛型类：class也可以配合泛型来使用
+比如 ，React的class组件的基类Component就是泛型类，不同的组件有不同的的props和state
+interface IState{count:number}
+interface IProps{maxLength:number}
+class InputCount extends  React.Component<IProps,IState>{
+    state:IState={
+        count:0
+    }
+    render(){
+        return <div>{this.props.maxLength}</div>
+    }
+}
+解释：React.Component泛型类两个类型变量，分别指定props和 state类型
+
+创建泛型类：
+class GenericNumberM<NumType>{
+    defaultValue:NumType
+    add:(x:NumType,y:NumType)=>NumType
+    constructor(value:NumType){
+        this.defaultValue=value
+    }
+}
+解释：
+*类似于泛型接口，在class名称后面添加<类型变量>，这个类就变成了泛型类
+*此处的add方法，采用的是箭头函数形式的类型书写方式 
+const myNum=new GenericNumber<number>()  //GenericNumber(10)可以省略<number>
+myNum.defaultValue=10
+类似于泛型接口，在创建class实例时，在类名后面通过<类型>来指定明确的类型。
+
+4.10  泛型工具类型 ：TS内置了一些常用的工具类型，来简化TS中的一些常见操作。
+说明：他们都是基于泛型实现的（泛型使用于多种类型，更加通用），并且是内置的 ，可以直接在代码中使用。
+这些工具类型有很多，主要学习以下几个：
+①Partial<Type>
+②Readonly<Type>
+③Pick<Type,Keys>
+④Record<Keys,Type>
+
+①泛型工具类型-Partial<Type>用来构造（创建）一个类型，将Type的所有属性设置为可选。
+interface Props{
+    id:string
+    children:number[]
+}
+type PartialProps=Partial<Props>
+解释：构造出来的新类型PartialProps结构和Props相同，但所有属性都变为可选的
+
+②泛型工具类型-Readonly<Type>用来构造一个类型，将Type的所有属性都设置为readonly（只读）
+interface  Props{
+    id:string
+    children:numberp[]
+}
+type ReadonlyProps = Readonly<Props>
+解释：构造出来的新类型ReadonlyProps结构和 Props相同 ，但所有属性都变为了只读的
+let props:ReadonlyProps:{id:'1',children:[]}
+props.id='2'//报错
+当我们想重新给id属性赋值时，就会报错：无法分配到'id',因为它是只读属性
+
+③泛型工具类型-Pick<Type,Key>从Type中选择一组属性来构造新类型
+interface Props{
+    id:string
+    title:string
+    children:number[]
+}
+type PickProps = Pick<Props,'id' | 'title'>
+解释：
+*Pick工具类型有两个类型变量：一个表示选择谁的属性 ，一个表示选择那几个属性
+*其中第二个类型变量，如果只选择一个则只传入该属性名即可
+*第二个类型变量传入的属性只能是第一个类型变量中存在的属性
+*构造出来的新类型PickProps，只有id和title两个属性类型
+
+④泛型工具类型-Record<Keys,Type>构造一个对象类型，属性键为Keys，属性类型为Type
+type RecordObj = Record<'a'|'b'|'c',string[]>
+let obj:RecordObj={
+    a:['1'],
+    b:['2'],
+    c:['3']
+}
+解释：
+*Record工具类型有两个类型变量：一个表示对象有哪些属性，一个表示对象属性的类型
+*构建的新对象类型RecordObj表示：这个对象有三个属性分别为a/b/c，属性值的类型都是string[]
+
+5.索引签名类型
+绝大多数情况下，我们都可以在使用对象前就确定对象的结构，并为对象添加准确的类型
+使用场景：当无法确定对象中有哪些属性（或者说对象中可以出现任意多个属性），此时，就用到索引签名类型了 
+interface AnyObject{
+    [key:string]:number
+}
+let obj:AnyObject={
+    a:1,
+    b:2
+}
+解释：
+①使用[key:string]来约束该接口中允许出现的属性名称。表示只要是string类型的属性名称，都可以出现在对象中。
+②这样，对象obj中就可以出现任意多个属性（比如，a、b等）
+③key只是一个占位符，可以换成任意合法的变量名称
+④隐藏的前置知识：JS中对象({})的键是string类型的
+
+在JS中数组是一类特殊的对象，特殊在是数组的键（索引）是数值类型
+并且，数组也可以出现任意多个元素。所以，在数组对应的泛型接口中，也用到了索引签名类型
+interface MyArray<T>{
+    [n:number]:T
+}
+let arr:MyArray<number>=[1,3,5]
+解释：
+①MyArray接口模拟原生的数组接口，并使用[n:number]来作为索引签名类型。
+②该索引签名类型表示：只要是number类型的键（索引）都可以出现在数组中，或者说数组中可以有任意多个元素
+③同时也符合数组索引是number类型这一前提
+
+6.映射类型
+6.1 映射类型：基于旧类型创建新类型（对象类型），减少重复、提升 开发效率
+比如，类型PropKeys有x/y/z，另一个类型 Type1中也有x/y/z，并且Type1中 x/y/z的类型相同：
+type PropKeys = 'x'|'y'|'z'
+type Type1 = {x:number;y:number;z:number}
+这样书写没错，但x/y/z重复书写了两次。像这种情况，就可以使用映射类型来进行简化
+type PropKeys = 'x'|'y'|'z'
+type Type2 = {[Key in PropKeys]:number}
+解释：
+*映射类型是基于索引标签类型的，所以，该语法类似于索引标签类型，也使用了[]。
+*Key in PropKeys表示Key可以是PropKeys联合类型中的任意一个，类似于forin(let k in obj)
+*使用映射类型创建的新对象类型Type2和类型Type1结构完全相同
+*注意：映射类型只能在类型别名中使用，不能在接口中使用
+
+6.2 映射类型除了根据联合类型创建新类型外，还可以根据对象类型来创建：
+type Props = {a:number;b:string;c:boolean}
+type Type2 = {[Key in keyof Props]:number}
+解释：
+*首先，先执行keyof Props获取到对象类型Props中所有键的联合类型，即'a'|'b'|'c'
+*然后，Key in ...就表示Key可以是Props中所有的键名称中的任意一个
+
+6.3 实际上，前面讲到的泛型工具类型（比如，Partial<Type>）都是基于映射类型实现的
+比如，Partial<Type>的实现：
+type Partial<T>={
+    [P in keyof T]?:T[P]
+}
+type Props = {a:number;b:string;c:boolean}
+type PartialProps=Partial<Props>
+解释：
+*keyof T即keyof Props表示获取Props的所有键，也就是：'a'|'b'|'c'
+*在[]后面添加?(问号)，表示将这些属性变为可选的，以此来实现Partial的功能
+*冒号后面的T[P]表示获取T中每个键对应的类型。比如，如果是'a'则类型是number，如果是'b'则类型是string
+*最终，新类型 PartialProps和旧类型Props结构完全相同，只是让所有类型都变为可选了
+
+6.4 刚刚用到的T[P]语法，在TS中叫做索引查询（访问）类型。
+作用：用来查询属性的类型。
+type Props={a:number;b:string;c:boolean}
+    //type TypeA=  number
+type TypeA = Props['a']
+解释：Props['a']表示查询类型Props中属性'a'对应的类型number。所以，TypeA的类型为number。
+注意：[]中的属性必须存在于被查询类型中，否则就会报错
+
+6.5 索引查询类型的其他使用方式：同时查询多个索引的类型
+type Props = {a:number;b:string;c:boolean}
+type TypeA = props['a'|'b']//string | number
+解释：使用字符串字面量的联合类型，获取属性a和b对应的类型，结果为：string|number
+type TypeA = Props[keyof Props]//string|number|boolean
+解释：使用keyof操作符获取Props中所有键对应的类型，结果为:string|number|boolean

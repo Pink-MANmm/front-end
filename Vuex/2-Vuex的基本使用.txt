@@ -1,0 +1,22 @@
+1.安装vuex的依赖包
+npm i vuex --save
+
+2.导入vuex包
+import Vuex from 'vuex'
+Vue.use(Vuex)
+
+3.创建store对象
+const store=new Vuex.Store({
+    //state中存放的就是全局共享的数据
+    state:{count:0}
+})
+
+4.将store对象挂载到vue实例中(vue ui配置中选择vuex)
+new Vue({
+    el:'#app',
+    render:h=>h(app),
+    router,
+    //将创建的共享数据对象，挂载到Vue实例中
+    //所有的组件，就可以直接从store中获取全局的数据了
+    store
+})

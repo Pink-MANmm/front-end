@@ -1,0 +1,22 @@
+目的
+*只要分模块，state取值方式改变，其他暂时不变
+
+state使用方式修改
+*方式1：组件内，直接使用
+ 原语法：
+ this.$store.state.变量名
+ 分模块后语法：
+ this.$store.state.模块名.变量名
+*方式2：组件内-映射使用
+ 原语法：
+ ...mapState(['state里变量名])
+ ...mapState({'变量名':'state里变量名'})//给映射过来的state起别的名字
+ 分模块后语法：
+ ...mapState({
+    '变量名':state=>state.模块名.变量名
+ })
+
+ App.vue-修改
+ computed:{
+    ...mapState({'list':state => state.cart.goodsList})
+ }

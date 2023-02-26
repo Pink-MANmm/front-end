@@ -1,0 +1,129 @@
+1.modules定义
+1.1 为什么要用modules分对象：
+*由于使用单一状态树，应用的所有状态会集中到一个比较大的对象。当应用变得非常复杂时，store对象就有可能变得相当臃肿。
+*为了解决以上问题，Vuex允许我们将store分割成模块（module）。每个模块拥有自己的state、mutation、action、getter、甚至是嵌套子模块
+
+1.2 代码对比
+
+//不分模块
+const store = new Vuex.Store({
+    state:{
+        user:{
+            name:"",
+            age:0,
+            sex:''
+        },
+        cart:{
+            goodsList:[]
+        }
+    },
+    mutations:{},
+    actions:{},
+    getters:{},
+    modules:{}
+})
+
+//分模块
+//1.用户模块
+const userModule = {
+    state(){
+        return {
+            name:"",
+            age:0,
+            sex:''
+        }
+    },
+    mutations:{},
+    actions:{},
+    getters:{}
+}
+//2.购物车模块
+const cartModule = {
+    state(){
+        return {
+            goodsList:[]
+        }
+    },
+    mutations:{},
+    actions:{},
+    getters:{}
+}
+
+1.2.3 创建modules模块对象
+*新建store/modules/user.js
+*新建store/modules/cart.js
+语法：对象里包含5个核心概念，只有state变成函数形式
+user.js-用户模块对象
+
+//用户模块对象
+const userModule = {
+    state(){
+        return {
+            name:"",
+            age:0,
+            sex:''
+        }
+    },
+    mutations:{},
+    actions:{},
+    getters:{}
+}
+export default userModule
+
+cart.js-购物车模块对象
+
+//购物车模块对象
+import axios from 'axios'
+const cartModule = {
+    state(){
+        return {
+            goodsList:[]
+        }
+    },
+    mutations:{
+        setGoodsList(state,newList){
+            state.goodsList=newList
+        }
+    },
+    actions:{
+        async asyncGetGoodsList(store){
+            const url='https://www.escook.cn/api/cart'
+            //发送异步请求
+            const res = await axios({url:url});
+            store.commit('setGoodsList',res.data.list)//提交mutation修改state中的数据
+        }
+    },
+    getters:{
+        allCount(state){
+            return state.goodsList.reduce((sum,obj)=>{
+                if (obj.goods_state === true){//选中商品才累加数量
+                    sum += obj.goods_count * obj.goods_price
+                }
+                return sum
+            },0)
+        }
+    }
+}
+export  default cartModule
+
+1.2.4 定义modules
+语法:
+
+modules:{
+    模块名：模块对象
+}
+
+*把2个模块对象，因回到store里注册
+
+import Vue from 'vue'
+import Vuex from 'vuex'
+import cartModule from './modules/cart'
+import userModule from './modules/user'
+Vue.use(Vuex)
+const store = new Vuex.Store({
+    modules:{//小模块注册名
+        cart:cartModule，
+        user:userModule
+    }
+})
+export default store

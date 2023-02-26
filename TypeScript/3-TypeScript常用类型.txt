@@ -1,0 +1,312 @@
+1.概述
+typeScript是JS的超集，TS提供了JS的所有功能，并且额外的增加了：类型系统。
+*所有的JS代码都是TS代码。
+*JS有类型（比如，number/string等），但是JS不会检查变量的类型是否发生变化。而TS会检查。
+TypeScript类型系统的主要优势：可以显示标记出代码中的意外行为，从而降低了发生错误的可能性。
+
+①类型注释
+②常用基础类型
+
+2.类型注解
+示例代码：
+let age:number=18
+说明：代码中的:number就是类型注解。
+作用：为变量添加类型约束。比如，上述代码中，约定变量age的类型为number（数值类型）
+解释：约定了什么类型，就只能给变量赋值该类型的值，否则，就会报错。
+
+3.常用基础类型概述
+可以将TS中的常用基础类型细分为两类：①JS已有类型②TS新增类型
+①JS已有类型
+*原始类型：number/string/boolean/null/undefined/symbol
+*对象类型：object（包括数组、对象、函数等对象）
+②TS新增类型
+*联合类型、自定义类型（类型别名）、接口、元组、字面量类型、枚举、void、any等。
+
+4.原始类型
+原始类型：number/string/boolean/null/undefined/symbol
+特点：简单。这些类型，完全按照JS中类型的名称来书写。
+let age:number = 18
+let myName:string = '刘老师'
+let isLoading:boolean = false
+//等等...
+
+5.数组类型
+对象类型:object（包括数组、对象、函数等对象）
+特点：对象类型，在TS中更加细化，每个具体的对象都有自己的类型语法
+*数组类型的两种写法：（推荐使用number[]、string[]写法）
+let numbers: nummber[]=[1,3,5]
+let strings: Array<string>=['a','b','c']
+需求：数组中既有number类型，又有string类型，这个数组的类型应该如何写
+let arr:(number|string)[]=[1,'a','b']
+
+//不添加小括号，表示arr1既可以是number类型，也可以是string[]类型
+let arr1: number|string[] = ['a','b']
+let arr1: number|string[] = 123
+解释：|（竖线）在TS中叫做联合类型（由两个或多个其他类型组成的类型，表示可以是这些类型中的任意一种）。
+注意：这是TS中联和类型的语法，只有一根竖线，不要再JS中的或（||）混淆了。
+
+6.类型别名
+类型别名
+类型别名（自定义类型）：为任意类型起别名。
+使用场景：当同一类型（复杂）被多次使用时，可以通过类型别名，简化该类型的使用。
+type CustomArray = (number | string)[]
+let arr1:CustomArray = [1,'a',3,'b']
+let arr2:CustomArray = ['x','y',6,7]
+解释：
+*使用type关键字来创建类型别名
+*类型别名（比如，此处的CustomArray），可以是任意合法的变量名称
+*创建类型别名后，直接使用该类型别名作为变量的类型注解即可
+
+7.函数类型
+7.1 函数的类型实际上指的是：函数参数和返回值的类型。
+为函数指定类型的两种方式：①单独指定参数、返回值的类型②同时指定参数、返回值的类型。
+*单独指定参数、返回值的类型：
+function add(num1:number,num2:number):number{
+    return num1+num2
+}
+const add = (num1:number,num2:number):number=>{
+    return num1+num2
+}
+*同时指定参数、返回值的类型:
+const add:(num1:number,num2:number)=>number=(num1,num2)=>{
+    return num1+num2
+}
+解释：当函数作为表达式时，可以通过类似箭头函数形式的语法来为函数添加类型。
+注意：这种形式只适用于函数表达式
+
+7.2 如果含数没有返回值，name，函数返回值类型为：void。
+function greet(name:string):void{
+    console.log('Hello',name)
+}
+
+7.3 使用函数实现某个功能时，参数可以传也可以不传。这种情况下，在给函数参数指定类型时，就用到可选参数了。
+比如，数组的slice方法，可以slice()也可以slice(1)还可以slice(1,3)
+function mySlice(start?:number,end?:number):void{
+    console.log('起始索引：',start,'结束索引:'，end)
+}
+可选参数：在可传可不传的参数名称后面添加？（问号）。
+注意：可选参数只能出现在参数列表的最后，也就是说可选参数后面不能再出现必选参数
+
+8.对象类型
+js中的对象是由属性和方法构成的，而TS中对象的类型就是在描述对象的结构（有什么类型的属性和方法）。
+对象类型的写法：
+let person:{name:string;age:number;sayHi():void}={
+    name:'jack',
+    age:19,
+    sayHi(){}
+}
+解释：
+①直接使用{}来描述对象结构。属性采用属性名：类型的形式；；方法采用方法名（）：返回值类型的形式。
+②如果方法有参数，就在方法后面的小括号中指定参数类型（比如：greet（name：string）：void）。
+③在一行代码中指定对象的多个属性类型时，使用；（分号）来分隔。
+*如果一行代码只指定一个属性类型（通过换行来分割多个属性类型），可以去掉；（分号）。
+*方法的类型也可以使用箭头函数形式（比如：{sayHi:()=>void}）。
+
+对象的属性或方法，也可以是可选的，此时就用到可选属性了。
+比如，我们在使用axios({...})时，如果发送GET请求，method属性就可以省略。
+function myAxios(config:{url:string;method?:string}){
+    console.log(config)
+}
+myAxios({
+    url:''
+})
+可选属性的语法与函数可选参数的语法一致，都使用？（问号）来表示。
+
+9.接口
+9.1 当一个对象类型被多次使用时，一般会使用接口（interface）来描述对象的类型，达到复用的目的。
+解释：
+①使用interface关键字来声明接口。
+②接口名称（比如，此处的IPerson），可以是任意合法的变量名称
+③声明接口后，直接使用接口名称作为变量的类型。
+④因为每一行只有一个属性类型，因此，属性类型后没有；（分号）
+interface Iperson{
+    name: string
+    age:number
+    sayHi():volid
+}
+let Person:Iperson={
+    name:'jack',
+    age:19,
+    sayHi(){}
+}
+
+9.2 interface（接口）和type（类型别名）的对比：
+*相同点：都可以给对象指定类型
+*不同点：
+  -接口，只能为对象指定类型
+  -类型别名，不仅可以为对象制定类型，手撕鸡身上可以为任意类型指定别名。
+interface Iperson{
+    name: string
+    age:number
+    sayHi():volid
+}
+type Iperson = {
+    name: string
+    age:number
+    sayHi():volid
+}
+type NumStr=number|string
+
+9.3 如果两个接口之间有相同的属性或方法，可以将公共的属性或方法抽离出来，通过继承来实现复用。
+比如，这两个接口都有x、y两个属性，重复写两次，可以，但是繁琐。
+interface Point2D{x:number;y:number}
+interface Point3D{x:number;y:number;z:number}
+更好的方式：
+interface Point2D{x:number;y:number}
+interface Point3D extends Point2D{z:number}
+解释：
+①使用extends（继承）关键字实现了接口Point3D继承Point2D
+②继承后，Point3D就有了Point2D的所有属性和方法（此时，Point3D同时又x、y、z三个属性）
+
+10.元组
+场景：在地图中，使用经纬度坐标来标记位置信息
+可以使用数组来记录坐标，那么，该数组中只有两个元素，并且这两个元素都是数值类型。
+let position:number[]=[39.5427,116.2317]
+使用number[]的缺点：不严谨，因为该类型的数组中可以出现任意多个数字
+更好的方式：元组（Tuple）
+元组类型是另一种类型的数组，他确切的知道包含多少个元素，以及特定索引对应的类型。
+let position:[number,number]=[39.5427,116.2317]
+解释：
+①元组类型可以确切的标记出有多少个元素，以及每个元素的类型。
+②该示例中，元素有两个元素，每个元素的类型都是number。
+
+11.类型推论
+在TS中，某些没有明确指出类型的地方，TS的类型推论机制会帮助提供类型
+换句话说：由于类型推论的存在，这些地方，类型注解可以省略不写！
+发生类型推论的2种常见场景：①声明变量并初始化时②决定函数返回值时
+    //let age:number //TS自动推断出变量age为number类型
+let age=18 //鼠标移入变量名称age
+    //function add(num1:number,num2:number):number
+function add(num1:number,num2:number){return num1+num2}
+注意：这两种情况下，类型注解可以省略不写！（如果声明变量但没有立即初始化值，此时，还必须手动添加类型注解）
+推荐：能省略类型注解的地方就省略（偷懒，充分利用TSS类型推论的能力，提升开发效率）。
+技巧：如果不知道类型，可以通过鼠标放在变量名称上，利用VSCode的提示来查看类型
+
+12.类型断言
+有时候你会比TS更加明确一个值的类型，此时，可以使用类型断言来指定更具体的类型。
+比如：
+<a href="http://www.itcost.cn/" id="link">传智教育</a>
+    //const aLink:HTMLElement
+const aLink = document.getElementtById('link')
+注意：getElementById方法返回值的类型是HTMLElement，该类型只包含所有标签公共的属性或方法，不包含a标签特有的href等属性。
+因此，这个类型太宽泛（不具体），无法操作href等a标签特有的属性或方法。
+解决方法：这种情况下就需要使用类型断言指定更加具体的类型。
+
+使用类型断言：：
+    //const aLink:HTMLAnchorElement
+const aLink = document.getElementtById('llink') as HTMLAnchorElement
+解释：
+①使用as关键字实现类型断言。
+②关键字as后面的类型是一个更加具体的类型（HTMLAnchorElement是HTMLElement的子类型）。
+③通过类型断言，aLink的类型变得更加具体，这样就可以访问a标签特有的属性或方法了
+另一种语法，使用<>语法，这种语法形式不常用知道即可：
+const aLink = <HTMLAnchorElement>document.getElementtById('link')
+技巧：在浏览器控制台，通过console.dir()打印DOM元素，在属性列表的最后面，即可看到该元素的类型
+
+13.字面量类型
+思考一下代码，两个变量的类型分别是什么？
+let str1 = 'hello TS'
+const str2 = 'hello TS'
+通过TS类型推论机制，可以得到答案：
+①变量str1的类型为：string。
+②变量str2的类型为：'hello TS'
+解释：
+①str1是一个变量（let），它的值可以是任意字符串，所以类型为string。
+②str2是一个常量（const），他的值不能变化只能是'hello TS'，所以，它的类型为：'hello TS'。
+注意：此处的'hello TS'，就是一个字面量类型。也就是说某个特定的字符串也可以作为TS中的类型。
+除字符串外，任意的JS字面量（比如，对象、数字等）都可以作为类型使用
+
+使用模式：字面量类型配合联合类型一起使用。
+使用场景：用来表示一组明确的可选值列表。
+比如，在贪吃蛇游戏中，游戏的方向的 可选值只能是上下左右中的任意一个。
+function changeDirection(direction:'up'|'down'|'left'|'right'){
+    console.log(direction)
+}
+解释：参数direction的值只能是up/down/left/right中的任意一个。
+优势：相比于string类型，使用字面量类型更加精确、严谨
+
+14.枚举
+14.1 枚举的功能类似于字面量类型+联合类型组合的功能，也可以表示一组明确的可选值。
+枚举：定义一组命名常量。他描述一个值，该值可以是这些命名常量中的一个。
+enum Direction {Up,Down,Left,Right}
+
+function changeDirection(direction:Direction){
+    console.log(direction)
+}
+changeDirection(Direction.Up)
+解释：
+①使用enum关键字定义枚举。
+②约定枚举名称、枚举中的值以及大写字母开头。
+③枚举中的多个值之间通过，（逗号）分隔。
+④定义好枚举后，直接使用枚举名称作为类型注释
+
+14.2 注意：形参direction的类型为枚举Direction，那么，实参的值就应该是枚举Direction成员的任意一个。
+访问枚举成员：
+changeDirection(Direction.Up)
+解释：类似于JS中的对象，直接通过点（.）语法访问枚举的成员
+
+14.3 问题：我们把枚举成员作为了函数的实参，它的值是什么呢？
+    //（enum member）Direction.Up=0
+changeDirection(Direction.Up)
+解释：通过将鼠标移入Direction.Up，可以看到枚举成员Up的值为0.
+注意：枚举成员是有值的，默认为：从0开始自增的数值。
+我们把枚举成员的值为数字的枚举，称为：数字枚举
+当然，也可以给枚举中的成员初始化值。
+//Down->11/Left->12/Right->13
+enum Direction{Up=10,Down,Left,Right}
+enum Direction{Up=2,Down=4,Left=8,Right=16}
+
+14.4 字符串枚举：枚举成员的值是字符串
+enum Direction{
+    Up='Up',
+    Down='DOWN',
+    Left='LEFT',
+    Right='RIGHT'
+}
+注意：字符串枚举没有自增长行为 ，因此，字符串枚举的每个成员必须有初始值
+
+14.5 枚举是TS为数不多的非JavaScript类型级扩展（不仅仅是类型）的特性之一。
+因为：其他类型仅仅被当作类型，而枚举不仅用作类型，还提供值（枚举成员都是有值的）
+也就是说，其他的类型会在编译为JS代码时自动移除，但是，枚举类型会被编译为JS代码！
+enum Direction{
+    Up='Up',
+    Down='DOWN',
+    Left='LEFT',
+    Right='RIGHT'
+}
+//编译
+var Direction;
+(function(Direction){
+    Direction['Up']='UP';
+    Direction['Down']='DOWN';
+    Direction['Left']='LEFT';
+    Direction['Right']='RIGHT';
+})(Direction || (Direction = {}))
+说明：枚举与前面讲到的字面量类型+联合类型组合的功能类似，都用来表示一组明确的可选值列表。
+一般情况下，推荐使用字面量类型+联合类型组合的方式，因为相比枚举，这种方式更加直观、简介、高效。
+
+15.any类型
+原则：不推荐使用any！ 这会让TypeScript变为'AnyScript'（失去TS类型保护的优势）
+因为当值的类型为any时，可以对该值进行任意操作，并且不会有代码提示。
+let obj:any={x:0}
+obj.bar=100
+obj()
+const n:number=obj
+解释：以上操作都不会有任何类型错误提示，即使可能存在错误！
+尽可能的避免使用any类型，除非临时使用any来“避免”书写很长，很复杂的类型！
+其他隐式具有any类型的情况：①声明变量不提供类型也不提供默认值②函数参数不加类型
+注意：因为不推荐使用any，所以，这两种情况下都应该提供类型
+
+16.typeof
+众所周知，JS中提供了typeof操作符，用来在JS中获取数据的类型。
+console.log(typeof "hello world")//打印string
+实际上 ，TS也提供了typeof操作符：可以在类型上下文中引用变量或属性的类型（类型查询）。
+使用场景：根据已有变量的值，获取该值的类型 ，来简化类型书写。
+let p={x:1,y:2}
+function formatPoint(point:{x:number,y:number}){}
+formatPoint(p)
+function formatPoint(point:typeof p){}
+解释：
+①使用typeof操作符来获取变量p的类型，结果与第一种（对象字面量形式的类型）相同。
+②typeof出现在类型注解的位置（参数名称的冒号后面）所处的环境就在类型上下文（区别于JS代码）。
+③注意：typeof只能用来查询变量或属性的类型，无法查询其他形式的类型（比如，函数调用的类型）
